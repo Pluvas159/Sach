@@ -5,14 +5,15 @@ from PIL import Image, ImageTk
 h = 800
 w = 800
 orange = '#ff6633'
+
 class Sach(tkinter.Frame):
     def __init__(self):
-        master = tkinter.Tk()
+        master = tkinter.Toplevel()
         super().__init__(master)
         self.canvas = tkinter.Canvas(master, width = 800, height = 800)
         self.canvas.pack()
         self.draw_board()
-        self.draw_entities()
+        #self.draw_entities()
 
         self.canvas.bind('<Button-1>', self.OnClick)
         self.canvas.bind('<Motion>', mouse.motion)
@@ -20,44 +21,90 @@ class Sach(tkinter.Frame):
         self.moving = False
         self.turn = 0
 
+        self.order = None
+        self.o_turn = None
+        self.o_moved = False
+        self.moved_to = []
+        self.moving_from = []
+
+        self.end = False
+
+
+
 
 
 
     def draw_board(self):
-        self.squares = []
-        farba = '#ff6633'
-        for i in range(8):
-            for j in range(8):
-                self.squares.append(Square(self.canvas.create_rectangle(0+(w/8)*j, 0+(h/8)*i, 100+(w/8)*j, 100+(h/8)*i, fill = farba), self.canvas, j+1, i+1, farba))
-                if farba=='#ff6633':
-                    farba = '#c4c4c4'
-                else:
-                    farba = '#ff6633'
-            if farba=='#ff6633':
-                    farba = '#c4c4c4'
-            else:
-                    farba = '#ff6633'
+        	self.squares = []
+        	farba = '#ff6633'
+        	for i in range(8):
+        		for j in range(8):
+        			self.squares.append(Square(self.canvas.create_rectangle(0+(w/8)*j, 0+(h/8)*i, 100+(w/8)*j, 100+(h/8)*i, fill = farba), self.canvas, j+1, i+1, farba))
+        			if farba=='#ff6633':
+        				farba = '#c4c4c4'
+        			else:
+        				farba = '#ff6633'
+        		if farba=='#ff6633':
+        			farba = '#c4c4c4'
+        		else:
+        			farba = '#ff6633'
 
 
     def draw_entities(self):
-        self.pesiaky()
-        self.veze()
-        self.kone()
-        self.bishops()
-        self.king()
-        self.queen()
+    	self.pesiaky()
+    	self.veze()
+    	self.kone()
+    	self.bishops()
+    	self.king()
+    	self.queen()
+    	if self.state=='offline':
+    		self.entities = [self.pesiaky, self.veze, self.kone, self.bishops, self.queens, self.kings]
+    		self.b_entities = [self.b_pesiaky, self.b_veze, self.b_kone, self.b_bishops, self.b_queens, self.b_kings]
+    	elif self.order == 1:
+    		self.b_entities = [self.b_pesiaky, self.b_veze, self.b_kone, self.b_bishops, self.b_queens, self.b_kings]
+    	elif self.order == 2:
+    		self.entities = [self.pesiaky, self.veze, self.kone, self.bishops, self.queens, self.kings]
 
-        self.entities = [self.pesiaky, self.veze, self.kone, self.bishops, self.queens, self.kings]
-        self.b_entities = [self.b_pesiaky, self.b_veze, self.b_kone, self.b_bishops, self.b_queens, self.b_kings]
+
+    def draw_opponent(self):
+    	if self.order == 1:
+    		self.pesiaky, self.veze, self.kone, self.bishops, self.queens, self.kings = [], [], [], [], [], []
+    		for i in range(8):
+    			self.pesiaky.append(Pesiak(50+(w/8)*i,(h/8+50), self))
+    		for i in range(2):
+    			self.veze.append(Veza(50+700*i,50,self))
+    			self.kone.append(Kon(150+500*i,50,self))
+    			self.bishops.append(Bishop(250+300*i,50,self))
+    		self.kings.append(King(450, 50, self))
+    		self.queens.append(Queen(350,50, self))
+    		self.entities = [self.pesiaky, self.veze, self.kone, self.bishops, self.queens, self.kings]
+    	else:
+    		self.b_pesiaky, self.b_veze, self.b_kone, self.b_bishops, self.b_queens, self.b_kings = [], [], [], [], [], []
+    		for i in range(8):
+    			self.b_pesiaky.append(b_pesiak(50+(w/8)*i,(h/8*6+50), self))
+    		for i in range(2):
+    			self.b_veze.append(b_veza(50+700*i,750,self))
+    			self.b_kone.append(b_kon(150+500*i,750,self))
+    			self.b_bishops.append(b_bishop(250+300*i,750,self))
+    		self.b_kings.append(b_king(450, 750, self))
+    		self.b_queens.append(b_queen(350,750, self))
+    		self.b_entities = [self.b_pesiaky, self.b_veze, self.b_kone, self.b_bishops, self.b_queens, self.b_kings]
 
 
-                  
+
+
+
     def pesiaky(self):
         self.pesiaky = []
         self.b_pesiaky = []
         for i in range(8):
-            self.pesiaky.append(Pesiak(50+(w/8)*i,(h/8+50), self))
-            self.b_pesiaky.append(b_pesiak(50+(w/8)*i,(h/8*6+50), self))
+            if self.state=='offline' or self.order == 2:
+                self.pesiaky.append(Pesiak(50+(w/8)*i,(h/8+50), self))
+                if self.order !=2:
+                	self.b_pesiaky.append(b_pesiak(50+(w/8)*i,(h/8*6+50), self))
+            elif self.order == 1:
+                self.b_pesiaky.append(b_pesiak(50+(w/8)*i,(h/8*6+50), self))
+
 
 
 
@@ -65,57 +112,101 @@ class Sach(tkinter.Frame):
         self.veze = []
        	self.b_veze = []
         for i in range(2):
-        	self.veze.append(Veza(50+700*i,50,self))
-        	self.b_veze.append(b_veza(50+700*i,(h/8*7+50),self))
+        	if self.state=='offline' or self.order == 2:
+        		self.veze.append(Veza(50+700*i,50,self))
+        		if self.order !=2:
+        			self.b_veze.append(b_veza(50+700*i,(h/8*7+50),self))
+        	elif self.order == 1:
+        		self.b_veze.append(b_veza(50+700*i,(h/8*7+50),self))
+
 
     def kone(self):
     	self.kone = []
     	self.b_kone = []
     	for i in range(2):
-    		self.kone.append(Kon(150+500*i,50,self))
-    		self.b_kone.append(b_kon(150+500*i,(h/8*7+50),self))
+    		if self.state=='offline' or self.order == 2:
+    			self.kone.append(Kon(150+500*i,50,self))
+    			if self.order !=2:
+    				self.b_kone.append(b_kon(150+500*i,(h/8*7+50),self))
+    		elif self.order == 1:
+    			self.b_kone.append(b_kon(150+500*i,(h/8*7+50),self))
+
 
     def bishops(self):
     	self.bishops = []
     	self.b_bishops = []
     	for i in range(2):
-    		self.bishops.append(Bishop(250+300*i,50,self))
-    		self.b_bishops.append(b_bishop(250+300*i,(h/8*7+50),self))
+    		if self.state=='offline' or self.order == 2:
+    			self.bishops.append(Bishop(250+300*i,50,self))
+    			if self.order !=2:
+    				self.b_bishops.append(b_bishop(250+300*i,(h/8*7+50),self))
+    		elif self.order == 1:
+    			self.b_bishops.append(b_bishop(250+300*i,(h/8*7+50),self))
+
 
     def king(self):
     	self.kings = []
     	self.b_kings = []
-    	self.kings.append(King(450, 50, self))
-    	self.b_kings.append(b_king(450, (h/8*7+50), self))
+    	if self.state=='offline' or self.order == 2:
+    		self.kings.append(King(450, 50, self))
+    		if self.order !=2:
+    			self.b_kings.append(b_king(450, (h/8*7+50), self))
+    	elif self.order == 1:
+    		self.b_kings.append(b_king(450, (h/8*7+50), self))
+
 
     def queen(self):
     	self.queens = []
     	self.b_queens = []
-    	self.queens.append(Queen(350,50, self))
-    	self.b_queens.append(b_queen(350,(h/8*7+50), self))
+    	if self.state=='offline' or self.order == 2:
+    		self.queens.append(Queen(350,50, self))
+    		if self.order !=2:
+    			self.b_queens.append(b_queen(350,(h/8*7+50), self))
+    	elif self.order == 1:
+    		self.b_queens.append(b_queen(350,(h/8*7+50), self))
+
 
 
 
     def OnClick(self, event):
-	    mouse.click = True
-	    x = event.x
-	    y = event.y
-	    pozicia = [int(x//100+1), int(y//100+1)]
-	    a = False
-	    if self.turn%2==0:
-		    for entities in self.entities:
-		    	for entity in entities:
-		    		if entity.pozicia == pozicia:
-		    			if not self.moving:
-		    				entity.move()
-		    			break
-	    else:
-		    for entities in self.b_entities:
-		    	for entity in entities:
-		    		if entity.pozicia == pozicia:
-		    			if not self.moving:
-		    				entity.move()
-		    			break
+    	mouse.click = True
+    	x = event.x
+    	y = event.y
+    	pozicia = [int(x//100+1), int(y//100+1)]
+    	a = False
+    	if not self.end:
+	    	if self.state=='offline':
+	    	    if self.turn%2==0:
+	    		    for entities in self.entities:
+	    		    	for entity in entities:
+	    		    		if entity.pozicia == pozicia:
+	    		    			if not self.moving:
+	    		    				entity.move()
+	    		    			break
+	    	    else:
+	    		    for entities in self.b_entities:
+	    		    	for entity in entities:
+	    		    		if entity.pozicia == pozicia:
+	    		    			if not self.moving:
+	    		    				entity.move()
+	    		    			break
+	    	elif self.o_turn:
+	    		if self.order ==1:
+	    			for entities in self.b_entities:
+	    				for entity in entities:
+	    					if entity.pozicia == pozicia:
+	    						if not self.moving:
+	    							entity.move()
+	    						break
+	    		else:
+	    			for entities in self.entities:
+	    				for entity in entities:
+	    					if entity.pozicia == pozicia:
+	    						if not self.moving:
+	    							entity.move()
+	    						break
+
+
 
 
 
@@ -123,7 +214,8 @@ class Sach(tkinter.Frame):
         
 
 class User(Sach):
-    def __init__(self):
+    def __init__(self, state):
+        self.state = state
         super().__init__()
 
 
@@ -147,8 +239,8 @@ class Square():
 
 class Pesiak():
     def __init__(self, x, y, board):
-        self.image = ImageTk.PhotoImage(Image.open('pesiak.png'))
-        self.objekt = board.canvas.create_image(x,y, image= self.image)
+        self.image = ImageTk.PhotoImage(Image.open('img\\pesiak.png'))
+        self.objekt = board.canvas.create_image(x, y, image= self.image)
         self.pozicia = [int(x//100+1), int(y//100+1)]
         for square in board.squares:
         	if square.pozicia==self.pozicia:
@@ -167,6 +259,14 @@ class Pesiak():
         self.canvas.delete(self.objekt)
         self.objekt = self.canvas.create_image(self.x,self.y, image= self.image)
         self.canvas.update()
+
+    def end(self, kto):
+        self.canvas.delete('all')
+        self.canvas.unbind_all('<Button-1>')
+        self.canvas.unbind_all('<Motion>')
+        self.canvas.delete('all')
+        self.canvas.create_text(w/2, h/2, text = f'{kto} vyhral', font = 'Arial 50 bold')
+
 
 
     def move(self):
@@ -195,29 +295,65 @@ class Pesiak():
             	for squar in self.available_l:
             			if squar.pozicia==pozicia:
             				if squar!=self.sqr:
-		            			if self.color=='black':
-		            				self.sqr.occupied = False
-		            			else:
-		            				self.sqr.b_occupied = False
+		            			self.sqr.occupied = False
+		            			self.sqr.b_occupied = False
 		            			self.sqr = squar
 		            			if self.color=='black':
 		            				squar.occupied = True
 		            			else:
 		            				squar.b_occupied = True
+		            			self.board.moved_to = pozicia
+		            			self.board.moving_from = self.pozicia
 		            			self.pozicia = pozicia
 		            			self.board.turn +=1
-		            		if self.color=='black':
-		            			for e in self.board.b_entities:
-		            				for s in e:
-			            				if s.sqr==self.sqr: 
-			            					s.kill()
-		            		else:
-		            			for e in self.board.entities:
-		            				for s in e:
-			            				if s.sqr == self.sqr:
-			            					s.kill()
-		            		self.moving = False
+		            			self.board.o_moved = True
+		            			if self.color=='black':
+		            				for e in self.board.b_entities:
+		            					for s in e:
+			            					if s.sqr==self.sqr: 
+			            						if s.type=='king':
+			            							self.end('Čierny')
+			            							self.moving = False
+			            							self.board.end = True
+			            						s.kill()
+		            			else:
+		            				for e in self.board.entities:
+		            					for s in e:
+			            					if s.sqr == self.sqr:
+			            						if s.type=='king':
+			            							self.end('Biely')
+			            							self.moving = False
+			            							self.board.end = True
+			            						s.kill()
+			            		if self.type=='king':
+			            			if self.sqr.occupied:
+			            				for e in self.board.veze:
+				            					if self.pozicia==e.pozicia:
+				            						if self.pozicia[0]==8:
+				            							self.artificial_move([e.pozicia[0]-1, e.pozicia[1]])
+				            							e.artificial_move([self.pozicia[0]-1, self.pozicia[1]])
+				            							break
+				            						elif self.pozicia[0]==1:
+				            							self.artificial_move([e.pozicia[0]+2, e.pozicia[1]])
+				            							e.artificial_move([self.pozicia[0]+1, self.pozicia[1]])
+				            							break
 
+			            			else:
+			            				for e in self.board.b_veze:
+			            					if self.pozicia==e.pozicia:
+			            						if self.pozicia[0]==8:
+				            						self.artificial_move([e.pozicia[0]-1, e.pozicia[1]])
+				            						e.artificial_move([self.pozicia[0]-1, self.pozicia[1]])
+				            						break
+				            					elif self.pozicia[0]==1:
+				            						self.artificial_move([e.pozicia[0]+2, e.pozicia[1]])
+				            						e.artificial_move([self.pozicia[0]+1, self.pozicia[1]])
+				            						break
+
+
+
+		            		self.moving = False
+		            		#print('w')
 
         square.change_color(square.defaultcolor)
         self.x = 100*(self.pozicia[0]-1)+50
@@ -226,6 +362,70 @@ class Pesiak():
         self.delete_available()
         self.board.moving = False
 
+    def artificial_move(self, pozicia):
+    	pozicia = pozicia
+    	#print(f'{self.sqr.occupied} + {self.sqr.b_occupied}')
+    	for squar in self.board.squares:
+    		if not self.board.end:
+	            if squar.pozicia==pozicia:
+	            	if squar!=self.sqr:
+			            self.sqr.occupied = False
+			            self.sqr.b_occupied = False
+			            #self.sqr.change_color(self.sqr.defaultcolor)
+			            self.sqr = squar
+			            if self.color=='black':
+			            	squar.occupied = True
+			            else:
+			            	squar.b_occupied = True
+			            self.pozicia = pozicia
+			            if self.color=='black':
+			            	for e in self.board.b_entities:
+			            		for s in e:
+				            		if s.sqr==self.sqr:
+				            			if s.type=='king':
+				            				self.end('Čierny')
+				            				self.moving = False
+				            				self.board.end = True
+				            			s.kill()
+			            else:
+			            	for e in self.board.entities:
+			            		for s in e:
+				            		if s.sqr == self.sqr:
+				            			if s.type=='king':
+				            				self.end('Biely')
+				            				self.moving = False
+				            				self.board.end = True
+				            			s.kill()
+			            if self.type=='king':
+				            			if self.sqr.occupied:
+				            				for e in self.board.veze:
+					            					if self.pozicia==e.pozicia:
+					            						if self.pozicia[0]==8:
+					            							self.artificial_move([e.pozicia[0]-1, e.pozicia[1]])
+					            							e.artificial_move([self.pozicia[0]-1, self.pozicia[1]])
+					            							break
+					            						elif self.pozicia[0]==1:
+					            							self.artificial_move([e.pozicia[0]+2, e.pozicia[1]])
+					            							e.artificial_move([self.pozicia[0]+1, self.pozicia[1]])
+					            							break
+
+				            			else:
+				            				for e in self.board.b_veze:
+				            					if self.pozicia==e.pozicia:
+				            						if self.pozicia[0]==8:
+					            						self.artificial_move([e.pozicia[0]-1, e.pozicia[1]])
+					            						e.artificial_move([self.pozicia[0]-1, self.pozicia[1]])
+					            						break
+					            					elif self.pozicia[0]==1:
+					            						self.artificial_move([e.pozicia[0]+2, e.pozicia[1]])
+					            						e.artificial_move([self.pozicia[0]+1, self.pozicia[1]])
+					            						break
+
+    	self.x = 100*(self.pozicia[0]-1)+50
+    	self.y = 100*(self.pozicia[1]-1)+50
+    	self.redraw()
+
+
     def rule(self, square):
     	pozicia = square.pozicia
     	if pozicia[1]==self.pozicia[1]+1 and pozicia[0]==self.pozicia[0] and not square.b_occupied:
@@ -233,6 +433,11 @@ class Pesiak():
     	if square.b_occupied:
     		if (square.pozicia[0]==self.pozicia[0]+1 or square.pozicia[0]==self.pozicia[0]-1) and square.pozicia[1]==self.pozicia[1]+1:
     			return True
+    	if self.pozicia[1]==2:
+    		if pozicia[1]==4 and pozicia[0]==self.pozicia[0] and not square.b_occupied: 
+    			for s in self.board.squares:
+    				if s.pozicia[1]==3 and s.pozicia[0]==pozicia[0] and not (s.b_occupied or s.occupied):
+    					return True
 
     def available(self):
     	self.available_l = []
@@ -250,6 +455,26 @@ class Pesiak():
     			if square.occupied and self.sqr.b_occupied:
     					square.change_color('green')
     					self.available_l.append(square)
+
+    			if self.type=='king':
+    				if self.pozicia == self.defposition:
+    					for e in self.board.veze:
+    						if e.pozicia==square.pozicia:
+    							if e.sqr.occupied == self.sqr.occupied:
+	    							square.change_color('yellow')
+	    							self.available_l.append(square)
+	    							break
+	    				for e in self.board.b_veze:
+    						if e.pozicia==square.pozicia:
+    							if e.sqr.occupied == self.sqr.occupied:
+	    							square.change_color('yellow')
+	    							self.available_l.append(square)
+	    							break
+
+
+
+
+
 
 
 
@@ -301,7 +526,7 @@ class Pesiak():
 class Veza(Pesiak):
 	def __init__(self, x, y, canvas):
 		super().__init__(x, y, canvas)
-		self.image = ImageTk.PhotoImage(Image.open('veza.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\veza.png'))
 		self.redraw()
 		self.color = 'black'
 		self.type = 'veza'
@@ -376,7 +601,7 @@ class Veza(Pesiak):
 class Kon(Pesiak):
     def __init__(self, x, y, canvas):
         super().__init__(x, y, canvas)
-        self.image = ImageTk.PhotoImage(Image.open('kon.png'))
+        self.image = ImageTk.PhotoImage(Image.open('img\\kon.png'))
         self.redraw()
         self.color = 'black'
         self.type = 'kon'
@@ -394,7 +619,7 @@ class Kon(Pesiak):
 class Bishop(Pesiak):
 	def __init__(self, x, y, canvas):
 		super().__init__(x, y, canvas)
-		self.image = ImageTk.PhotoImage(Image.open('bishop.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\bishop.png'))
 		self.redraw()
 		self.color = 'black'
 		self.type = 'bishop'
@@ -468,21 +693,89 @@ class Bishop(Pesiak):
 class King(Pesiak):
     def __init__(self, x, y, canvas):
         super().__init__(x, y, canvas)
-        self.image = ImageTk.PhotoImage(Image.open('king.png'))
+        self.image = ImageTk.PhotoImage(Image.open('img\\king.png'))
         self.redraw()
         self.color = 'black'
         self.type = 'king'
+        self.defposition = [5,1]
 
     def rule(self, square):
     	pozicia = square.pozicia
     	if (pozicia[0]==self.pozicia[0]+1 or pozicia[0] == self.pozicia[0] or pozicia[0]==self.pozicia[0]-1) and (pozicia[1]==self.pozicia[1]+1 or pozicia[1]==self.pozicia[1] or pozicia[1]==self.pozicia[1]-1):
     			return True
+    	else:
+	    	for v in self.board.veze:
+	    		if v.pozicia==pozicia:
+	    				if square.pozicia[0]==self.pozicia[0]+3 and square.pozicia[1]==self.pozicia[1]:
+	    					for entities in self.board.entities:
+	    						for e in entities:
+	    							if e!=v:
+		    							if e.pozicia[1]==self.pozicia[1]:
+		    								if e.pozicia[0]-self.pozicia[0]>0:
+		    									return False
+	    					for entities in self.board.b_entities:
+	    						for e in entities:
+	    							if e!=v:
+		    							if e.pozicia[1]==self.pozicia[1]:
+		    								if e.pozicia[0]-self.pozicia[0]>0:
+		    									return False
+	    					return True
+	    				elif square.pozicia[0]==self.pozicia[0]-4 and square.pozicia[1]==self.pozicia[1]:
+	    					for entities in self.board.entities:
+	    						for e in entities:
+	    							if e!=v:
+		    							if e.pozicia[1]==self.pozicia[1]:
+		    								if e.pozicia[0]-self.pozicia[0]<0:
+		    									return False
+	    					for entities in self.board.b_entities:
+	    						for e in entities:
+	    							if e!=v:
+		    							if e.pozicia[1]==self.pozicia[1]:
+		    								if e.pozicia[0]-self.pozicia[0]<0:
+		    									return False
+	    					return True
+
+
+	    	for v in self.board.b_veze:
+	    		if v.pozicia==pozicia:
+	    				if square.pozicia[0]==self.pozicia[0]+3 and square.pozicia[1]==self.pozicia[1]:
+	    					for entities in self.board.entities:
+	    						for e in entities:
+	    							if e!=v:
+		    							if e.pozicia[1]==self.pozicia[1]:
+		    								if e.pozicia[0]-self.pozicia[0]>0:
+		    									return False
+	    					for entities in self.board.b_entities:
+	    						for e in entities:
+	    							if e!=v:
+		    							if e.pozicia[1]==self.pozicia[1]:
+		    								if e.pozicia[0]-self.pozicia[0]>0:
+		    									return False
+	    					return True
+	    				elif square.pozicia[0]==self.pozicia[0]-4 and square.pozicia[1]==self.pozicia[1]:
+	    					for entities in self.board.entities:
+	    						for e in entities:
+	    							if e!=v:
+		    							if e.pozicia[1]==self.pozicia[1]:
+		    								if e.pozicia[0]-self.pozicia[0]<0:
+		    									return False
+	    					for entities in self.board.b_entities:
+	    						for e in entities:
+	    							if e!=v:
+		    							if e.pozicia[1]==self.pozicia[1]:
+		    								if e.pozicia[0]-self.pozicia[0]<0:
+		    									return False
+	    					return True
+
+
+
+
 
 
 class Queen(Pesiak):
 	def __init__(self, x, y, canvas):
 		super().__init__(x, y, canvas)
-		self.image = ImageTk.PhotoImage(Image.open('queen.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\queen.png'))
 		self.redraw()
 		self.color = 'black'
 		self.type = 'queen'
@@ -616,7 +909,7 @@ class Queen(Pesiak):
 class b_pesiak(Pesiak):
 	def __init__(self, x, y, board):
 		super().__init__(x, y, board)
-		self.image = ImageTk.PhotoImage(Image.open('b_pesiak.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\b_pesiak.png'))
 		self.objekt = board.canvas.create_image(x,y, image= self.image)
 		self.pozicia = [int(x//100+1), int(y//100+1)]
 		self.color = 'white'
@@ -630,11 +923,16 @@ class b_pesiak(Pesiak):
 		if square.occupied:
 			if (pozicia[0]==self.pozicia[0]+1 or pozicia[0]==self.pozicia[0]-1) and pozicia[1]==self.pozicia[1]-1:
 				return True
+		if self.pozicia[1]==7:
+			if pozicia[1]==5 and pozicia[0]==self.pozicia[0] and not square.occupied:
+				for s in self.board.squares:
+					if s.pozicia[1]==6 and s.pozicia[0]==pozicia[0] and not (s.b_occupied or s.occupied):
+						return True 
 
 class b_veza(Veza):
 	def __init__(self, x, y, board):
 		super().__init__(x, y, board)
-		self.image = ImageTk.PhotoImage(Image.open('b_veza.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\b_veza.png'))
 		self.objekt = board.canvas.create_image(x,y, image= self.image)
 		self.pozicia = [int(x//100+1), int(y//100+1)]
 		self.color = 'white'
@@ -644,7 +942,7 @@ class b_veza(Veza):
 class b_kon(Kon):
 	def __init__(self, x, y, board):
 		super().__init__(x, y, board)
-		self.image = ImageTk.PhotoImage(Image.open('b_kon.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\b_kon.png'))
 		self.objekt = board.canvas.create_image(x,y, image= self.image)
 		self.pozicia = [int(x//100+1), int(y//100+1)]
 		self.color = 'white'
@@ -655,7 +953,7 @@ class b_kon(Kon):
 class b_bishop(Bishop):
 	def __init__(self, x, y, board):
 		super().__init__(x, y, board)
-		self.image = ImageTk.PhotoImage(Image.open('b_bishop.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\b_bishop.png'))
 		self.objekt = board.canvas.create_image(x,y, image= self.image)
 		self.pozicia = [int(x//100+1), int(y//100+1)]
 		self.color = 'white'
@@ -665,17 +963,18 @@ class b_bishop(Bishop):
 class b_king(King):
 	def __init__(self, x, y, board):
 		super().__init__(x, y, board)
-		self.image = ImageTk.PhotoImage(Image.open('b_king.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\b_king.png'))
 		self.objekt = board.canvas.create_image(x,y, image= self.image)
 		self.pozicia = [int(x//100+1), int(y//100+1)]
 		self.color = 'white'
 		self.sqr.occupied = False
 		self.sqr.b_occupied = True
+		self.defposition = [5,8]
 
 class b_queen(Queen):
 	def __init__(self, x, y, board):
 		super().__init__(x, y, board)
-		self.image = ImageTk.PhotoImage(Image.open('b_queen.png'))
+		self.image = ImageTk.PhotoImage(Image.open('img\\b_queen.png'))
 		self.objekt = board.canvas.create_image(x,y, image= self.image)
 		self.pozicia = [int(x//100+1), int(y//100+1)]    
 		self.color = 'white'	
@@ -700,10 +999,4 @@ class Mouse():
 
         
 
-
-                    
-
-
 mouse = Mouse()
-main = User()
-main.mainloop()
