@@ -4,7 +4,9 @@
 
 simple tkinter application made in python's tkinter
 
-start with 
+# start 
 
     python start.py
 
+# Server
+    python server.py
