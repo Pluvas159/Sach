@@ -36,18 +36,20 @@ class Sach(tkinter.Frame):
 
     def draw_board(self):
         	self.squares = []
-        	farba = '#ff6633'
+        	farba1 = '#ff6633'
+        	farba2 = '#c4c4c4'
+        	farba = farba1
         	for i in range(8):
         		for j in range(8):
         			self.squares.append(Square(self.canvas.create_rectangle(0+(w/8)*j, 0+(h/8)*i, 100+(w/8)*j, 100+(h/8)*i, fill = farba), self.canvas, j+1, i+1, farba))
-        			if farba=='#ff6633':
-        				farba = '#c4c4c4'
+        			if farba==farba1:
+        				farba = farba2
         			else:
-        				farba = '#ff6633'
-        		if farba=='#ff6633':
-        			farba = '#c4c4c4'
+        				farba = farba1
+        		if farba==farba1:
+        			farba = farba2
         		else:
-        			farba = '#ff6633'
+        			farba = farba1
 
 
     def draw_entities(self):
